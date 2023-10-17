@@ -1,39 +1,38 @@
 import throttle from 'lodash.throttle';
 
 
+
+const submitFormEl = document.querySelector('.feedback-form');
 const LOCAL_KEY = 'feedback-form-state';
+let formData = {};
+submitFormEl.addEventListener('submit', feedbackInput);
 
-form = document.querySelector('.feedback-form');
+function feedbackInput(event) {
+    event.preventDefault();
+    localStorage.removeItem(LOCAL_KEY);  // Видаленя ключа в локал кеш
+    console.log(formData);
+    event.currentTarget.reset();
 
-form.addEventListener('input', throttle(onInputData, 500));
-form.addEventListener('submit', onFormSubmit);
+};
 
-let dataForm = JSON.parse(localStorage.getItem(LOCAL_KEY)) || {};
-const { email, message } = form.elements;
-reloadPage();
+submitFormEl.addEventListener('input', throttle(inputResult, 500));
+function inputResult(event) {
+    formData[event.target.name] = event.target.value.trim(); // вибір таргета і результат 
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(formData)); // записуємо в локал кеш як обьєкт!
+};
+submitFormEl.addEventListener('input', throttle(inputResult, 500));
 
-function onInputData(e) {
-  dataForm = { email: email.value, message: message.value };
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(dataForm));
-}
+refreshForm();
 
-function reloadPage() {
-  if (dataForm) {
-    email.value = dataForm.email || '';
-    message.value = dataForm.message || '';
-  }
-}
-
-function onFormSubmit(e) {
-  e.preventDefault();
-  console.log({ email: email.value, message: message.value });
-
-  if (email.value === '' || message.value === '') {
-    return alert('Please fill in all the fields!');
-  }
-
-  localStorage.removeItem(LOCAL_KEY);
-  e.currentTarget.reset();
-  dataForm = {};
-}
-
+function refreshForm() {
+    try {
+        var savedData = localStorage.getItem(LOCAL_KEY);
+        if (!savedData) return;
+            formData = JSON.parse(savedData);
+            Object.entries(formData).forEach(([key, val]) => {
+                submitFormEl.elements[key].value = val;
+            });
+    } catch ({message}) {
+        console.log(message);
+    }
+};
